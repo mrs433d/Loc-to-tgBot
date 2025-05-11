@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>ارسال موقعیت به تلگرام</title>
+</head>
+<body>
+    <h1>لطفاً روی لینک کلیک کنید تا موقعیت مکانی ارسال شود:</h1>
+    <button onclick="getLocation()">ارسال موقعیت مکانی</button>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation, showError, { enableHighAccuracy: true });
+            } else {
+                alert("مرورگر از موقعیت مکانی پشتیبانی نمی‌کند.");
+            }
+        }
+
+        function sendLocation(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            // ارسال موقعیت به سرور
+            const url = `https://your-server-url.com/send-location`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ latitude: lat, longitude: lon })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert('موقعیت به سرور ارسال شد!');
+            })
+            .catch((error) => {
+                alert('خطا در ارسال موقعیت مکانی: ' + error);
+            });
+        }
+
+        function showError(error) {
+            alert("دسترسی به موقعیت مکانی رد شد یا خطا رخ داد.");
+        }
+    </script>
+</body>
+</html>
