@@ -1,48 +1,85 @@
 <?php
-// توکن بات و چت‌آیدی
-$telegram_token = '7926937226:AAFcIfZulEjhnXx7gQpnm712eE1-LvKoT_o';
-$chat_id = '-1002570608346';  // مثلا '-123456789'
+// وقتی با JavaScript اطلاعات ارسال میشه
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $data = json_decode(file_get_contents("php://input"), true);
 
-// دریافت ورودی JSON
-$data = json_decode(file_get_contents("php://input"), true);
+    $lat = $data["latitude"];
+    $lon = $data["longitude"];
 
-// بررسی اعتبار ورودی
-if (!isset($data['latitude']) || !isset($data['longitude'])) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Invalid input']);
+    $token = "7926937226:AAFcIfZulEjhnXx7gQpnm712eE1-LvKoT_o";
+    $chat_id = "-1002570608346";
+
+    $url = "https://api.telegram.org/bot$token/sendLocation?" . http_build_query([
+        "chat_id" => $chat_id,
+        "latitude" => $lat,
+        "longitude" => $lon
+    ]);
+
+    file_get_contents($url);
+
+    echo json_encode(["status" => "ok"]);
     exit;
 }
-
-// دریافت مقادیر
-$latitude = $data['latitude'];
-$longitude = $data['longitude'];
-
-// ارسال به API تلگرام
-$telegram_api_url = "https://api.telegram.org/bot{$telegram_token}/sendLocation";
-
-$params = [
-    'chat_id' => $chat_id,
-    'latitude' => $latitude,
-    'longitude' => $longitude
-];
-
-$options = [
-    'http' => [
-        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-        'method'  => 'POST',
-        'content' => http_build_query($params),
-    ]
-];
-
-$context  = stream_context_create($options);
-$result = file_get_contents($telegram_api_url, false, $context);
-
-// بررسی نتیجه
-if ($result === FALSE) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'ارسال به تلگرام ناموفق بود']);
-    exit;
-}
-
-echo json_encode(['status' => 'success', 'message' => 'موقعیت ارسال شد به تلگرام']);
 ?>
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>ارسال لوکیشن به تلگرام</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      padding: 15px 25px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h2>برای ارسال موقعیت مکانی‌ات، روی دکمه زیر بزن:</h2>
+  <button onclick="sendLocation()">ارسال موقعیت</button>
+  <div id="status"></div>
+
+  <script>
+    function sendLocation() {
+      if (!navigator.geolocation) {
+        alert("مرورگر شما موقعیت مکانی را پشتیبانی نمی‌کند.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(position => {
+        fetch("", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          })
+        }).then(res => res.json())
+          .then(data => {
+            document.getElementById("status").innerText = "موقعیت مکانی با موفقیت ارسال شد!";
+          }).catch(() => {
+            document.getElementById("status").innerText = "خطا در ارسال.";
+          });
+      }, () => {
+        alert("اجازه دسترسی به موقعیت مکانی داده نشد.");
+      });
+    }
+  </script>
+</body>
+</html>
