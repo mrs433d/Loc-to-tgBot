@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <style>
     body {
       font-family: Tahoma, sans-serif;
-      background: #f2f2f2;
+      background: #f0f2f5;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -43,10 +43,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     .form-container {
-      background-color: #ffffff;
+      background: white;
       padding: 35px 30px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
       width: 340px;
     }
 
@@ -56,17 +56,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       color: #333;
     }
 
-    input[type="text"], input[type="email"], input[type="password"] {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       padding: 10px;
-      margin: 10px 0 15px;
+      margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
+      font-size: 15px;
     }
 
     button {
-      background-color: #007BFF;
+      background-color: #28a745;
       color: white;
       border: none;
       padding: 12px;
@@ -77,63 +79,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: #218838;
     }
 
     #status {
-      text-align: center;
       margin-top: 15px;
-      font-weight: bold;
+      text-align: center;
       color: green;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div class="form-container">
     <h2>فرم ثبت اطلاعات</h2>
-    <input type="text" placeholder="نام کامل" disabled>
-    <input type="email" placeholder="ایمیل" disabled>
-    <input type="password" placeholder="رمز عبور" disabled>
-    <button id="sendBtn">ثبت اطلاعات</button>
-    <div id="status"></div>
-  </div>
-
-  <script>
-    document.getElementById("sendBtn").addEventListener("click", function () {
-      const statusEl = document.getElementById("status");
-      statusEl.innerText = "";
-
-      if (!navigator.geolocation) {
-        statusEl.innerText = "مرورگر موقعیت مکانی را پشتیبانی نمی‌کند.";
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(position => {
-        fetch("", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === "ok") {
-            statusEl.innerText = "اطلاعات با موفقیت ثبت شد!";
-          } else {
-            statusEl.innerText = "خطا: " + data.message;
-          }
-        })
-        .catch(() => {
-          statusEl.innerText = "خطا در ارسال اطلاعات.";
-        });
-      }, () => {
-        statusEl.innerText = "اجازه دسترسی به موقعیت مکانی داده نشد.";
-      });
-    });
-  </script>
-</body>
-</html>
+    <form id="
